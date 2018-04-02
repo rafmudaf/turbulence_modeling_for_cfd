@@ -1,0 +1,11 @@
+c-----------------------------------------------------------------------
+c    S E L E C T   A P P R O P R I A T E   C O M P I L E R / C P U
+c-----------------------------------------------------------------------
+c    icpu =  0...SVS Fortran (680x0/80x86)
+c         =  1...Lahey Fortran/Microsoft Fortran (80x86, Pentium)
+c         =  2...VAX/VMS
+c         =  3...SUN Fortran (68020/SPARC)
+c         =  4...Cray/Unicos
+c         =  5...Silicon Graphics Iris
+c-----------------------------------------------------------------------
+      icpu=1

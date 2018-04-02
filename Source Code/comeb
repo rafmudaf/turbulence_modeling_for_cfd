@@ -1,0 +1,217 @@
+c=======================================================================
+c   P R O G R A M   E D D Y B L   G L O B A L   P A R A M E T E R S
+c                        A N D   A R R A Y S
+c-----------------------------------------------------------------------
+      parameter (jk=301,js=50,ipro=10)
+c=======================================================================
+c                    P R O G R A M   A R R A Y S
+c=======================================================================
+c  Mean-flow arrays at (m-1),m,(m+1):
+c      fn,fo,fp,fpp........Streamwise velocity, U/Ue
+c      raton,ratoo,ratop...Radial distance, (r/ro)
+c      tn,to,tp............Temperature, (T/Te-1)
+c      vn,vo,vp............Transformed vertical velocity, V
+c  Matrix inversion coefficients:
+c      pp1,pp2,pp3.........Matrix coefficients, P1, P2, P3
+c      qq1,qq2,qq3.........Matrix coefficients, Q1, Q2, Q3
+c-----------------------------------------------------------------------
+      common/af/  fn(jk),fo(jk),fp(jk),fpp(jk)
+      common/ar/  raton(jk),ratoo(jk),ratop(jk)
+      common/at/  tn(jk),to(jk),tp(jk)
+      common/av/  vn(jk),vo(jk),vp(jk)
+      common/pq/  pp1(jk),pp2(jk),pp3(jk),qq1(jk),qq2(jk),qq3(jk)
+c-----------------------------------------------------------------------
+c  General turbulence and other arrays:
+c      dissk...............Dissipation (Saved for mean-energy equation)
+c      dissks..............Specific Dissipation (Saved for SOLVSW)
+c      ep..................Eddy viscosity
+c      fz..................Velocity gradient, dF/deta
+c      tz..................Temperature gradient, dT/deta
+c      xn..................Scaled normal distance, n*sqrt(Re)
+c      xlm11...............Viscosity parameter, (rho mu)/(rhoe mue)
+c      ret.................Turbulence Reynolds number, Ret
+c      uplus...............Sublayer scaled velocity, u+
+c      yplus...............Sublayer scaled normal distance, y+
+c      climit..............Stress-limiter function
+c      clim................Coefficient in stress-limiter function
+c      clim2...............clim**2
+c-----------------------------------------------------------------------
+      common/ot/  dissk(jk),dissks(jk),ep(jk),fz(jk),tz(jk),xn(jk),
+     *            xlm11(jk)
+      common/pl/  ret(jk),uplus(jk),yplus(jk)
+      common/cm/  climit(jk),clim,clim2
+c-----------------------------------------------------------------------
+c  k, omega and epsilon arrays at (m-1),m,(m+1):
+c      epn,epo,epp.........Transformed epsilon, E
+c      etn,eto,etp.........Turbulence kinetic energy, k/Ue**2
+c      wtn,wto,wtp.........Transformed omega, W
+c  Additional k, omega and epsilon arrays:
+c      eppp................Transformed epsilon, E
+c      etpp................Turbulence kinetic energy, k/Ue**2
+c      wtpp................Transformed omega, W
+c  Viscous damping parameters for the k-epsilon model:
+c      ef1.................Damping function, f1
+c      ef2.................Damping function, f2
+c      efmu................Damping function, fmu
+c      ehat................Epsilon equation extra viscous term
+c      eps0................Dissipation shifting function
+c      ry..................Turbulence Reynolds number, Ry
+c-----------------------------------------------------------------------
+      common/be/  epn(jk),epo(jk),epp(jk),eppp(jk)
+      common/bk/  etn(jk),eto(jk),etp(jk),etpp(jk)
+      common/bw/  wtn(jk),wto(jk),wtp(jk),wtpp(jk)
+      common/vv/  ef1(jk),ef2(jk),efmu(jk),ehat(jk),eps0(jk),ry(jk)
+c-----------------------------------------------------------------------
+c  Stress-omega model arrays at (m-1),m,(m+1):
+c      uun,uuo,uup.........xx Normal stress,  Txx/Ue**2
+c      uvn,uvo,uvp.........Shear stress,      Txy/Ue**2
+c      vvn,vvo,vvp.........yy Normal stress,  Tyy/Ue**2
+c      wwn,wwo,wwp.........zz Normal stress,  Tzz/Ue**2
+c  Additional Stress-omega model arrays:
+c      deluv...............Shear-stress shift, [Txy-mu(dU/deta)]/Ue**2
+c-----------------------------------------------------------------------
+      common/muu/ uun(jk),uuo(jk),uup(jk)
+      common/muv/ uvn(jk),uvo(jk),uvp(jk)
+      common/mvv/ vvn(jk),vvo(jk),vvp(jk)
+      common/mww/ wwn(jk),wwo(jk),wwp(jk)
+      common/mzz/ deluv(jk),qm(3,3,jk)
+c-----------------------------------------------------------------------
+c  Finite difference grid arrays for normal distance:
+c      dy..................Distance between adjacent grid points, deta
+c      y1..................Coefficient in 2nd derivatives, Y1
+c      y2..................Coefficient in 1st derivatives, Y2
+c      y3..................Coefficient in 2nd derivatives, Y3
+c      y4..................Coefficient in 1st derivatives, Y4
+c      y5..................Coefficient in 1st derivatives, Y5
+c      y6..................Coefficient in 1st derivatives, Y6
+c-----------------------------------------------------------------------
+      common/yy/  dy(jk),y1(jk),y2(jk),y3(jk),y4(jk),y5(jk),y6(jk)
+c-----------------------------------------------------------------------
+c   Edge and surface condition arrays:
+c      as..................Arc length, s
+c      ape,apep............Pressure, pressure gradient
+c      aqw,aqwp............Heat flux, heat flux gradient
+c      arhov,arhovp........Mass flux, mass flux gradient
+c      armi,armip..........Body radius, body radius gradient
+c      atw,atwp............Wall temperature, wall temperature gradient
+c      az,azp..............Axial distance, Axial distance gradient
+c      azcrv,azcrvp........Curvature, curvature gradient
+c-----------------------------------------------------------------------
+      common/eg/  as(js),ape(js),apep(js),aqw(js),aqwp(js),
+     *            arhov(js),arhovp(js),armi(js),armip(js),atw(js),
+     *            atwp(js),az(js),azp(js),azcrv(js),azcrvp(js)
+c=======================================================================
+c                I N P U T   P A R A M E T E R S
+c=======================================================================
+c  Input data are read in Subroutine NAMIN in the following order:
+c      /iodef/.............I/O unit numbers
+c      /moddef/............Turbulence model identifiers
+c      /close/.............k-omega model closure coefficients
+c      /keps/..............k-epsilon model closure coefficients
+c      /closem/............Stress-omega model closure coefficients, etc.
+c      /data/..............General input parameters (real)
+c      /ndata/.............General input parameters (integer)
+c      /pprint/............Streamwise stations for profile printout
+c-----------------------------------------------------------------------
+      common/iodef/    iunit1 ,  iunit2 ,  iunit3 ,  iunit4 ,  iunit5 ,
+     *                 iunit6 ,  iuplot ,  iutype
+      common/moddef/   model  ,  nvisc
+      common/close/    alpha  ,  beta   ,  betas  ,  sigma  ,  sigmas ,
+     *                 prt
+      common/closem/   alphah ,  betah  ,  gammah ,  cc1    ,  xis    ,
+     *                 xmt0
+      common/keps/     ceps1  ,  ceps2  ,  cmu    ,  sigmae ,  sigmak ,
+     *                 psieps
+      common/data/     cone   ,  ds     ,  g      ,  pr     ,  pt1    ,
+     *                 r      ,  rek    ,  rmi0   ,  sgn    ,  sstop  ,
+     *                 su     ,  tt1    ,  ustop  ,  viscon ,  vispow ,
+     *                 wave   ,  xk     ,  xma    ,  ziotae ,  ziotal
+      common/ndata/    ibody  ,  ibound ,  iedge  ,  iend1  ,  ishort ,
+     *                 j      ,  kebc   ,  kodwal ,  mstart ,  nflag  ,
+     *                 number
+      common/pprint/   proval(ipro)
+c=======================================================================
+c         G E N E R A L   M E A N   F L O W   P A R A M E T E R S
+c=======================================================================
+c      /bc/................Boundary condition parameters
+c      /cpuid/.............CPU identification flag
+c      /edge/..............General edge condition parameters
+c      /edyini/............Restart parameters
+c      /intpar/............Integral parameters
+c      /intxtr/............Integral parameter related quantities
+c      /phim1/.............Mean-flow 'm1' properties
+c      /phim2/.............Mean-flow 'm2' properties
+c      /rank/..............Freestream conditions, etc.
+c      /trbuln/............Edge condition parameters, etc.
+c      /unityp/............Heat transfer unit conversion factor
+c-----------------------------------------------------------------------
+      common/bc/       epsr   ,  es     ,  oy     ,  rghcon ,  rvwald ,
+     *                 te     ,  tw     ,  uplusb ,  vwall  ,  wwall  ,
+     *                 yscale
+      common/cpuid/    icpu
+      common/edge/     dtedx  ,  duedx  ,  pe     ,  pp     ,  z
+      common/edyini/   dhelp  ,  done   ,  dtwo   ,  d1help ,  eten   ,
+     *                 eteo   ,  itstop ,  restrt ,  rstrt  ,  rstrtm ,
+     *                 si     ,  si1    ,  testrt ,  ustrt  ,  ustrtm ,
+     *                 wten   ,  wteo   ,  xistrt
+      common/intpar/   anue   ,  anuw   ,  cfe    ,  cfw    ,  che    ,
+     *                 chw    ,  disp   ,  hd     ,  qsd    ,  recov  ,
+     *                 redelt ,  redelv ,  res    ,  rethet ,  taud   ,
+     *                 thadis ,  theta  ,  xmae
+      common/intxtr/   costh  ,  faa    ,  lamnar ,  netaeg ,  oz     ,
+     *                 qw     ,  rmi1j  ,  rmi2j  ,  tr     ,  tzmu   ,
+     *                 xlm1p  ,  xnden
+      common/phim1/    fm1    ,  fy     ,  fym    ,  fyp    ,  itro   ,
+     *                 iturb  ,  nskip  ,  rato1j ,  rato2j ,  rat2jm ,
+     *                 rat2jp ,  rxm    ,  rxp    ,  tm1    ,  tm1p   ,
+     *                 ty     ,  vm1    ,  xlm    ,  xlm1   ,  xlp
+      common/phim2/    fm2    ,  tm2
+      common/rank/     gm1    ,  gm1og  ,  prr    ,  prtr   ,  p10    ,
+     *                 reyref ,  r1     ,  tc     ,  tref   ,  t1     ,
+     *                 t10    ,  u1     ,  vispom ,  visref ,  vis1
+      common/trbuln/   eps    ,  re     ,  rmi    ,  s      ,  ue     ,
+     *                 x      ,  xal    ,  xbe    ,  xmtsq  ,  xnue
+      common/unityp/   heateq
+c=======================================================================
+c                    G R I D   P A R A M E T E R S
+c-----------------------------------------------------------------------
+c      /allmod/............General turbulence model parameters
+c      /bbhelp/............Baldwin-Barth model specific parameters
+c      /blhelp/............Baldwin-Lomax model specific parameters
+c      /cshelp/............Cebeci-Smith model specific parameters
+c      /jkhelp/............Johnson-King model specific parameters
+c      /kehelp/............k-epsilon model specific parameters
+c      /kwhelp/............k-omega model specific parameters
+c      /sahelp/............Spalart-Allmaras model specific parameters
+c      /swhelp/............Stress-omega model specific parameters
+c      /viscus/............k-omega/multiscale model low Re coefficients
+c-----------------------------------------------------------------------
+      common/allmod/   akappa ,  alphac ,  a0plus ,  beta25 ,  beta50 ,
+     *                 deltd  ,  emax   ,  epsmax ,  errmax ,  ete    ,
+     *                 jprint ,  kprint ,  nerror ,  relax1 ,  relax2
+      common/bbhelp/   a2plus ,  cbb1   ,  cbb2   ,  cbb3   ,  cbb4   ,
+     *                 cbb5   ,  cbb6
+      common/blhelp/   ccp    ,  ckleb  ,  coef10 ,  coef12 ,  cwk
+      common/cshelp/   coef1  ,  coef4  ,  coef6
+      common/jkhelp/   ajk1   ,  cdif   ,  cjk1   ,  cjk2   ,  coef14 ,
+     *                 nmaxjk ,  sigmaj ,  uvmaxn ,  uvmaxo ,  uvmaxp ,
+     *                 uvmxpp
+      common/kehelp/   epe    ,  coef8  ,  coef68
+      common/kwhelp/   coef2  ,  coef7  ,  coef9  ,  coef11 ,  coef15 ,  
+     *                 coef69 ,  sigmad ,  wte
+      common/sahelp/   cb1    ,  cb2    ,  coef16 ,  coef17 ,  csa1   ,
+     *                 csa2   ,  cv1    ,  cw1    ,  cw2    ,  cw3
+      common/swhelp/   csw1   ,  csw2   ,  csw3   ,  csw4   ,  csw5   ,
+     *                 csw6   ,  coef3  ,  coef5  ,  coef13
+      common/viscus/   gamh0  ,  alf0   ,  alfs0  ,  bbeta0 ,  rb     ,
+     *                 rk     ,  rw
+c=======================================================================
+c                    G R I D   P A R A M E T E R S
+c=======================================================================
+c      /xgrd/..............Coefficients for streamwise derivatives
+c      /ygrd/..............Coefficients for normal derivatives at wall
+c-----------------------------------------------------------------------
+      common/xgrd/     dx1    ,  dx2    ,  z1     ,  z2     ,  z3     ,
+     *                 z4     ,  z5
+      common/ygrd/     ww1    ,  ww2    ,  ww3    ,  ww4    ,  ww5
+c=======================================================================

@@ -1,0 +1,83 @@
+c=======================================================================
+      parameter (imx=500,jmx=300,imxp1=imx+1,jmxp1=jmx+1)
+c=======================================================================
+      common/akandw/   ep(imx,jmx),rhok(imx,jmx,2),rhomeg(imx,jmx,2),
+     *                 fbeta(imx,jmx)
+      common/ameanf/   e(imx,jmx,2),rho(imx,jmx,2),rhou(imx,jmx,2),
+     *                 rhov(imx,jmx,2)
+      common/amulti/   rhokme(imx,jmx,2),rhotxx(imx,jmx,2),
+     *                 rhotxy(imx,jmx,2),rhotyy(imx,jmx,2)
+      common/bkandw/   climit(imx,jmx),cross(imx,jmx),omeg(imx,jmx),
+     *                 pk(imx,jmx),tke(imx,jmx)
+      common/bmeanf/   ei(imx,jmx),p(imx,jmx),u(imx,jmx),v(imx,jmx)
+      common/bmulti/   dtxx(imx,jmx),dtxy(imx,jmx),dtyy(imx,jmx),
+     *                 ptij(imx,jmx),txx(imx,jmx),txy(imx,jmx),
+     *                 tyy(imx,jmx)
+      common/ckandw/   falf(imx,jmx),falfs(imx,jmx),fbet(imx,jmx)
+      common/cmulti/   falbet(imx,jmx),fgamh(imx,jmx),fcc1(imx,jmx)
+      common/duarys/   du(imx,jmx,9),dus(imx,jmx,9)
+      common/fandg/    fs1(2),fs2(2),fs3(2),fs4(2),fs5(2),
+     *                 fs6(2),fs7(2),fs8(2),fs9(2),
+     *                 g11(jmx),g12(jmx),g13(jmx),g14(jmx),
+     *                 g21(jmx),g22(jmx),g23(jmx),g24(jmx),
+     *                 g31(jmx),g32(jmx),g33(jmx),g34(jmx),
+     *                 g41(jmx),g42(jmx),g43(jmx),g44(jmx),
+     *                 g55(jmx),g66(jmx),g77(jmx),g88(jmx),
+     *                 g99(jmx),str(2)
+      common/grads/    dudx(imx,jmx),dudy(imx,jmx),dvdx(imx,jmx),
+     *                 dvdy(imx,jmx),vor(imx,jmx)
+      common/grid/     dvol(imxp1,jmxp1),eta(jmxp1),vol(imxp1,jmxp1),
+     *                 x(imxp1,jmxp1),y(imxp1,jmxp1)
+      common/tmp/      ut(imx,jmx),vt(imx,jmx)
+c=======================================================================
+      common/aindex/   icpu   ,  ilm1   ,  implt  ,  iskip  ,  jlm1   ,
+     *                 k1     ,  k2     ,  m      ,  muflag ,  n      ,
+     *                 nadv
+      common/acoefs/   a11    ,  a12    ,  a13    ,  a14    ,  a21    ,
+     *                 a22    ,  a23    ,  a24    ,  a31    ,  a32    ,
+     *                 a33    ,  a34    ,  a41    ,  a42    ,  a43    ,
+     *                 a44    ,  a55    ,  a66    ,  a77    ,  a88    ,
+     *                 a99    ,  ni
+      common/bcoefs/   b11    ,  b12    ,  b13    ,  b14    ,  b21    ,
+     *                 b22    ,  b23    ,  b24    ,  b31    ,  b32    ,
+     *                 b33    ,  b34    ,  b41    ,  b42    ,  b43    ,
+     *                 b44    ,  b55    ,  b66    ,  b77    ,  b88    ,
+     *                 b99
+      common/ccoefs/   c11    ,  c12    ,  c13    ,  c14    ,  c21    ,
+     *                 c22    ,  c23    ,  c24    ,  c31    ,  c32    ,
+     *                 c33    ,  c34    ,  c41    ,  c42    ,  c43    ,
+     *                 c44    ,  c55    ,  c66    ,  c77    ,  c88    ,
+     *                 c99
+      common/aconst/   betam  ,  cv     ,  eiwall ,  ggm1   ,  gm1    ,
+     *                 gmoprl ,  gmoprt ,  gp1
+      common/bconst/   faxi   ,  rhokmn ,  rhomw  ,  rhowmn ,  sigmad ,
+     *                 srk    ,  srkme  ,  sro    ,  srtxx  ,  srtxy  ,
+     *                 srtyy  ,  time   ,  xmtsq
+      common/cconst/   csw1   ,  csw2   ,  csw3   ,  resid
+      common/ainfin/   cinf   ,  dynp   ,  eiinf  ,  einf   ,  epinf  ,
+     *                 fmodel ,  qdm    ,  rhoinf ,  rhokin ,  rhomin ,
+     *                 rhouin ,  rmuinf ,  uinf
+      common/close/    beta   ,  betas  ,  alpha  ,  prt    ,  sigma  ,
+     *                 sigmas
+      common/closem/   alphah ,  betah  ,  gammah ,  cc1    ,  xis    ,
+     *                 xmt0
+      common/data/     cfl    ,  cflmul ,  dy0    ,  gam    ,  hfm    ,
+     *                 hmax   ,  pexit  ,  pinf   ,  prl    ,  radius ,
+     *                 rel    ,  retinf ,  rgas   ,  rl     ,  rough  ,
+     *                 su     ,  theta  ,  tinf   ,  tkeinf ,  twall  ,
+     *                 viscon ,  vispow ,  xma    ,  zscale
+      common/iodef/    iunit1 ,  iunit2 ,  iunit3 ,  iunit4 ,  iutype ,
+     *                 iuplot
+      common/limit/    clim   ,  clim2  ,  irealz
+      common/ndata/    iadbwl ,  iave   ,  iaxi   ,  icase  ,  iexit  ,
+     *                 il     ,  ile    ,  inletp ,  ipro   ,  ipwall ,
+     *                 ishk   ,  ite    ,  iwedge ,  jl     ,  jlfm   ,
+     *                 jsym   ,  model  ,  ncfl   ,  nend   ,  nprnt  ,
+     *                 ntau   ,  nvisc
+      common/splt/     si     ,  sj     ,  sx     ,  sxp    ,  sy     ,
+     *                 syp
+      common/total/    pt1    ,  rt1    ,  tt1
+      common/viscus/   alf0   ,  alfs0  ,  bbeta0 ,  gamh0  ,  rb     ,
+     *                 rk     ,  rw
+      save
+c=======================================================================
